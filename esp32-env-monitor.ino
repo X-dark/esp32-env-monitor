@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Wire.h>
 
 #include <WiFi.h>
 #include "wifi_login.h"
@@ -10,12 +11,15 @@
 #endif
 
 #include <BME280I2C.h>
-#include <Wire.h>
+
+#include <Adafruit_SGP30.h>
 
 U8X8_SSD1327_EA_W128128_4W_HW_SPI u8x8(/* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);
 
 BME280I2C bme;    // Default : forced mode, standby time = 1000 ms
                   // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
+
+Adafruit_SGP30 sgp;
 
 // setup the terminal (U8X8LOG) and connect to u8g2 for automatic refresh of the display
 // The size (width * height) depends on the display 
@@ -23,6 +27,17 @@ BME280I2C bme;    // Default : forced mode, standby time = 1000 ms
 #define U8LOG_HEIGHT 12
 uint8_t u8log_buffer[U8LOG_WIDTH*U8LOG_HEIGHT];
 U8X8LOG u8x8log;
+
+/* return absolute humidity [mg/m^3] with approximation formula
+* @param temperature [°C]
+* @param humidity [%RH]
+*/
+uint32_t getAbsoluteHumidity(float temperature, float humidity) {
+    // approximation formula from Sensirion SGP30 Driver Integration chapter 3.15
+    const float absoluteHumidity = 216.7f * ((humidity / 100.0f) * 6.112f * exp((17.62f * temperature) / (243.12f + temperature)) / (273.15f + temperature)); // [g/m^3]
+    const uint32_t absoluteHumidityScaled = static_cast<uint32_t>(1000.0f * absoluteHumidity); // [mg/m^3]
+    return absoluteHumidityScaled;
+}
 
 void setup() {
 
@@ -75,18 +90,46 @@ void setup() {
        u8x8log.print("Found UNKNOWN sensor! Error!\n");
   }
 
+
+  //Init SGP30 sensor
+  while(!sgp.begin())
+  {
+    u8x8log.print("Could not find SGP30 sensor!\n");
+    delay(1000);
+  }
+
+  u8x8log.print("Found SGP30 serial #");
+  u8x8log.print(sgp.serialnumber[0], HEX);
+  u8x8log.print(sgp.serialnumber[1], HEX);
+  u8x8log.print(sgp.serialnumber[2], HEX);
+  u8x8log.print("\n");
+
+  // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
+  //sgp.setIAQBaseline(0x8E68, 0x8F41);  // Will vary for each sensor!
+
+
 }
 
+int counter = 0;
 void loop() {
 
   //Clear screen
   u8x8log.print("\f");
 
+  //Read Temperature, humidity and pressure
   float temp(NAN), hum(NAN), pres(NAN);
   BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
   BME280::PresUnit presUnit(BME280::PresUnit_Pa);
 
   bme.read(pres, temp, hum, tempUnit, presUnit);
+
+  //Read Air Quality
+  sgp.setHumidity(getAbsoluteHumidity(temp, hum));
+
+  if (! sgp.IAQmeasure()) {
+    u8x8log.print("Air Quality Measurement failed\n");
+    return;
+  }
 
   u8x8log.print("Temp: ");
   u8x8log.print(temp);
@@ -98,6 +141,30 @@ void loop() {
   u8x8log.print(pres);
   u8x8log.print("Pa\n");
 
-  delay(10000);
+  u8x8log.print("TVOC ");
+  u8x8log.print(sgp.TVOC);
+  u8x8log.print(" ppb\n");
+  u8x8log.print("eCO2 ");
+  u8x8log.print(sgp.eCO2);
+  u8x8log.print(" ppm\n");
+
+  //Get Baseline readings every 30s
+  counter++;
+  if (counter == 30) {
+    counter = 0;
+
+    uint16_t TVOC_base, eCO2_base;
+    if (! sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) {
+      u8x8log.print("Failed to get baseline readings\n");
+      return;
+    }
+    u8x8log.print("Baseline values: eCO2: 0x");
+    u8x8log.print(eCO2_base, HEX);
+    u8x8log.print(" & TVOC: 0x");
+    u8x8log.print(TVOC_base, HEX);
+    u8x8log.print("\n");
+  }
+
+  delay(1000);
 
 }

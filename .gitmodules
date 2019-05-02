@@ -4,3 +4,6 @@
 [submodule "libraries/BME280"]
 	path = libraries/BME280
 	url = https://github.com/finitespace/BME280.git
+[submodule "libraries/Adafruit_SGP30"]
+	path = libraries/Adafruit_SGP30
+	url = https://github.com/adafruit/Adafruit_SGP30
