@@ -14,7 +14,7 @@
 
 #include <Adafruit_SGP30.h>
 
-U8X8_SSD1327_EA_W128128_4W_HW_SPI u8x8(/* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);
+U8X8_SSD1327_EA_W128128_4W_HW_SPI u8x8(/* cs=*/ 17, /* dc=*/ 3, /* reset=*/ 16);
 
 BME280I2C bme;    // Default : forced mode, standby time = 1000 ms
                   // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
