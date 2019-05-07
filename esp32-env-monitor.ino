@@ -178,9 +178,9 @@ void loop() {
   u8g2log.print(sgp.eCO2);
   u8g2log.print(" ppm\n");
 
-  //Get Baseline readings every 30s
+  //Get Baseline readings every hour
   counter++;
-  if (counter == 30) {
+  if (counter == 60) {
     counter = 0;
 
     uint16_t TVOC_base, eCO2_base;
@@ -195,6 +195,7 @@ void loop() {
     u8g2log.print("\n");
   }
 
-  delay(1000);
+  //wait 1min
+  delay(60000);
 
 }
