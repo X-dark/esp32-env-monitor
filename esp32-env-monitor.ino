@@ -16,8 +16,27 @@
 
 U8G2_SSD1327_WS_128X128_1_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 17, /* dc=*/ 3, /* reset=*/ 16);
 
-BME280I2C bme;    // Default : forced mode, standby time = 1000 ms
-                  // Oversampling = pressure ×1, temperature ×1, humidity ×1, filter off,
+
+/* Based on Bosch BME280I2C environmental sensor data sheet.
+Weather Monitoring :
+   forced mode, 1 sample/minute
+   pressure ×1, temperature ×1, humidity ×1, filter off
+   Current Consumption =  0.16 μA
+   RMS Noise = 3.3 Pa/30 cm, 0.07 %RH
+   Data Output Rate 1/60 Hz */
+
+BME280I2C::Settings settings(
+   BME280::OSR_X1,
+   BME280::OSR_X1,
+   BME280::OSR_X1,
+   BME280::Mode_Forced,
+   BME280::StandbyTime_1000ms,
+   BME280::Filter_Off,
+   BME280::SpiEnable_False,
+   BME280I2C::I2CAddr_0x76 // I2C address. I2C specific.
+);
+
+BME280I2C bme(settings);
 
 Adafruit_SGP30 sgp;
 
