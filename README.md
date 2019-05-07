@@ -10,7 +10,9 @@ Air quality and other environment data monitoring for an ESP32 board
   * [Useful Pin detailling page](https://www.learnarduinoraspberrypi.com/2018/08/doit-esp32-devkit-getting-started-programming.html)
 * Display: Waveshare 1.5 Oled Display (based on a SDD1327 chip)
 * Temperature, pressure and humidity sensor: BME280
+  * [Data Sheet](https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST-BME280-DS002.pdf)
 * Air Quality Sensor: SGP30
+  * [Data Sheet](https://www.sensirion.com/fileadmin/user_upload/customers/sensirion/Dokumente/0_Datasheets/Gas/Sensirion_Gas_Sensors_SGP30_Datasheet.pdf)
 
 ## Compiling and Uploading
 
