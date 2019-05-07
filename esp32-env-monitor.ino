@@ -55,10 +55,10 @@ U8G2LOG u8g2log;
 * @param humidity [%RH]
 */
 uint32_t getAbsoluteHumidity(float temperature, float humidity) {
-    // approximation formula from Sensirion SGP30 Driver Integration chapter 3.15
-    const float absoluteHumidity = 216.7f * ((humidity / 100.0f) * 6.112f * exp((17.62f * temperature) / (243.12f + temperature)) / (273.15f + temperature)); // [g/m^3]
-    const uint32_t absoluteHumidityScaled = static_cast<uint32_t>(1000.0f * absoluteHumidity); // [mg/m^3]
-    return absoluteHumidityScaled;
+  // approximation formula from Sensirion SGP30 Driver Integration chapter 3.15
+  const float absoluteHumidity = 216.7f * ((humidity / 100.0f) * 6.112f * exp((17.62f * temperature) / (243.12f + temperature)) / (273.15f + temperature)); // [g/m^3]
+  const uint32_t absoluteHumidityScaled = static_cast<uint32_t>(1000.0f * absoluteHumidity); // [mg/m^3]
+  return absoluteHumidityScaled;
 }
 
 void setup() {
@@ -96,28 +96,25 @@ void setup() {
   //Init BME280 sensor
   Wire.begin();
 
-  while(!bme.begin())
-  {
+  while(!bme.begin()) {
     u8g2log.print("Could not find BME280 sensor!\n");
     delay(1000);
   }
 
-  switch(bme.chipModel())
-  {
-     case BME280::ChipModel_BME280:
-       u8g2log.print("Found BME280 sensor! Success.\n");
-       break;
-     case BME280::ChipModel_BMP280:
-       u8g2log.print("Found BMP280 sensor! No Humidity available.\n");
-       break;
-     default:
-       u8g2log.print("Found UNKNOWN sensor! Error!\n");
+  switch(bme.chipModel()) {
+    case BME280::ChipModel_BME280:
+      u8g2log.print("Found BME280 sensor! Success.\n");
+      break;
+    case BME280::ChipModel_BMP280:
+      u8g2log.print("Found BMP280 sensor! No Humidity available.\n");
+      break;
+    default:
+      u8g2log.print("Found UNKNOWN sensor! Error!\n");
   }
 
 
   //Init SGP30 sensor
-  while(!sgp.begin())
-  {
+  while(!sgp.begin()) {
     u8g2log.print("Could not find SGP30 sensor!\n");
     delay(1000);
   }
@@ -199,3 +196,5 @@ void loop() {
   delay(60000);
 
 }
+
+// vim: set ts=2 sw=2 et:
