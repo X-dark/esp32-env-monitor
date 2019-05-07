@@ -76,7 +76,7 @@ void setup() {
   //Init wifi connection
   WiFi.begin(ssid, password);
 
-  u8g2log.print("Connecting to SSID:\n");
+  u8g2log.print("Connecting to:\n");
   u8g2log.print(ssid);
   u8g2log.print("\n");
   u8g2log.print("\n");
@@ -160,12 +160,12 @@ void loop() {
   u8g2log.print("Temp: ");
   u8g2log.print(temp);
   u8g2log.print("°"+ String(tempUnit == BME280::TempUnit_Celsius ? 'C' :'F'));
-  u8g2log.print("\nHumidity: ");
+  u8g2log.print("\nHum: ");
   u8g2log.print(hum);
   u8g2log.print("% RH");
-  u8g2log.print("\nPressure: ");
+  u8g2log.print("\nPres: ");
   u8g2log.print(pres);
-  u8g2log.print("Pa\n");
+  u8g2log.print("hPa\n");
 
   u8g2log.print("TVOC ");
   u8g2log.print(sgp.TVOC);
