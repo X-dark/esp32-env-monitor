@@ -128,6 +128,10 @@ void setup() {
   u8g2log.print(sgp.serialnumber[2], HEX);
   u8g2log.print("\n");
 
+  if (! sgp.IAQinit()){
+    u8g2log.print("Failed to init IAQ algorithm\n");
+  }
+
   // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
   //sgp.setIAQBaseline(0x8E68, 0x8F41);  // Will vary for each sensor!
 
