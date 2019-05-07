@@ -112,6 +112,8 @@ void setup() {
   // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
   //sgp.setIAQBaseline(0x8E68, 0x8F41);  // Will vary for each sensor!
 
+  //delay to allow setup output reading
+  delay(10000);
 
 }
 
