@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <Preferences.h>
 
 #include <WiFi.h>
 #include "wifi_login.h"
@@ -13,6 +14,8 @@
 #include <BME280I2C.h>
 
 #include <Adafruit_SGP30.h>
+
+Preferences preferences;
 
 U8G2_SSD1327_WS_128X128_1_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 17, /* dc=*/ 3, /* reset=*/ 16);
 
@@ -61,7 +64,14 @@ uint32_t getAbsoluteHumidity(float temperature, float humidity) {
   return absoluteHumidityScaled;
 }
 
+uint16_t TVOC_base, eCO2_base;
+
 void setup() {
+
+  //Init Non Volatile Storage
+  // Namespace name is limited to 15 chars.
+  // RW-mode (second parameter has to be false).
+  preferences.begin("env-monitor", false);
 
   //Init Display
   u8g2.begin();
@@ -129,8 +139,13 @@ void setup() {
     u8g2log.print("Failed to init IAQ algorithm\n");
   }
 
-  // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
-  //sgp.setIAQBaseline(0x8E68, 0x8F41);  // Will vary for each sensor!
+  TVOC_base = preferences.getUShort("TVOC_base",0);
+  eCO2_base = preferences.getUShort("eCO2_base",0);
+  if ( TVOC_base != 0 && eCO2_base != 0){
+    // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
+    u8g2log.print("Found previous baseline\n");
+    sgp.setIAQBaseline(eCO2_base, TVOC_base);
+  }
 
   //delay to allow setup output reading
   delay(10000);
@@ -180,7 +195,6 @@ void loop() {
   if (counter == 60) {
     counter = 0;
 
-    uint16_t TVOC_base, eCO2_base;
     if (! sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) {
       u8g2log.print("Failed to get baseline readings\n");
       return;
@@ -190,6 +204,8 @@ void loop() {
     u8g2log.print(" & TVOC: 0x");
     u8g2log.print(TVOC_base, HEX);
     u8g2log.print("\n");
+    preferences.putUShort("TVOC_base", TVOC_base);
+    preferences.putUShort("eCO2_base", eCO2_base);
   }
 
   //wait 1min
