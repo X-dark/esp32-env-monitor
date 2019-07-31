@@ -68,11 +68,6 @@ uint16_t TVOC_base, eCO2_base;
 
 void setup() {
 
-  //Init Non Volatile Storage
-  // Namespace name is limited to 15 chars.
-  // RW-mode (second parameter has to be false).
-  preferences.begin("env-monitor", false);
-
   //Init Display
   u8g2.begin();
   u8g2.setFont(u8g2_font_t0_15_mf);
@@ -139,6 +134,11 @@ void setup() {
     u8g2log.print("Failed to init IAQ algorithm\n");
   }
 
+  //Init Non Volatile Storage
+  // Namespace name is limited to 15 chars.
+  // RW-mode (second parameter has to be false).
+  preferences.begin("env-monitor", false);
+
   TVOC_base = preferences.getUShort("TVOC_base",0);
   eCO2_base = preferences.getUShort("eCO2_base",0);
   if ( TVOC_base != 0 && eCO2_base != 0){
@@ -146,6 +146,8 @@ void setup() {
     u8g2log.print("Found previous baseline\n");
     sgp.setIAQBaseline(eCO2_base, TVOC_base);
   }
+
+  preferences.end();
 
   //delay to allow setup output reading
   delay(10000);
@@ -204,8 +206,16 @@ void loop() {
     u8g2log.print(" & TVOC: 0x");
     u8g2log.print(TVOC_base, HEX);
     u8g2log.print("\n");
+
+    //Init Non Volatile Storage
+    // Namespace name is limited to 15 chars.
+    // RW-mode (second parameter has to be false).
+    preferences.begin("env-monitor", false);
+
     preferences.putUShort("TVOC_base", TVOC_base);
     preferences.putUShort("eCO2_base", eCO2_base);
+
+    preferences.end();
   }
 
   //wait 1min
