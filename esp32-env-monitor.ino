@@ -65,6 +65,7 @@ uint32_t getAbsoluteHumidity(float temperature, float humidity) {
 }
 
 uint16_t TVOC_base, eCO2_base;
+bool baseline_set = false;
 
 void setup() {
 
@@ -139,12 +140,20 @@ void setup() {
   // RW-mode (second parameter has to be false).
   preferences.begin("env-monitor", false);
 
-  TVOC_base = preferences.getUShort("TVOC_base",0);
-  eCO2_base = preferences.getUShort("eCO2_base",0);
-  if ( TVOC_base != 0 && eCO2_base != 0){
-    // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
-    u8g2log.print("Found previous baseline\n");
-    sgp.setIAQBaseline(eCO2_base, TVOC_base);
+  baseline_set = preferences.getBool("baseline_set",false);
+  if (baseline_set){
+    TVOC_base = preferences.getUShort("TVOC_base",0);
+    eCO2_base = preferences.getUShort("eCO2_base",0);
+    if ( TVOC_base != 0 && eCO2_base != 0){
+      // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
+      u8g2log.print("Found previous baseline\n");
+      sgp.setIAQBaseline(eCO2_base, TVOC_base);
+      u8g2log.print("Baseline values: eCO2: 0x");
+      u8g2log.print(eCO2_base, HEX);
+      u8g2log.print(" & TVOC: 0x");
+      u8g2log.print(TVOC_base, HEX);
+      u8g2log.print("\n");
+    }
   }
 
   preferences.end();
@@ -154,7 +163,8 @@ void setup() {
 
 }
 
-int counter = 0;
+int elapsed_minutes = 0;
+int elapsed_hours = 0;
 void loop() {
 
   //Clear screen
@@ -193,33 +203,38 @@ void loop() {
   u8g2log.print(" ppm\n");
 
   //Get Baseline readings every hour
-  counter++;
-  if (counter == 60) {
-    counter = 0;
+  if (elapsed_minutes == 60) {
+    elapsed_minutes = 0;
+    elapsed_hours++;
 
-    if (! sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) {
-      u8g2log.print("Failed to get baseline readings\n");
-      return;
+    //only get baseline after running for 12h
+    if (elapsed_hours >= 12 ){
+      if (! sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) {
+        u8g2log.print("Failed to get baseline readings\n");
+        return;
+      }
+      u8g2log.print("Baseline values: eCO2: 0x");
+      u8g2log.print(eCO2_base, HEX);
+      u8g2log.print(" & TVOC: 0x");
+      u8g2log.print(TVOC_base, HEX);
+      u8g2log.print("\n");
+
+      //Init Non Volatile Storage
+      // Namespace name is limited to 15 chars.
+      // RW-mode (second parameter has to be false).
+      preferences.begin("env-monitor", false);
+      preferences.putBool("baseline_set",true);
+
+      preferences.putUShort("TVOC_base", TVOC_base);
+      preferences.putUShort("eCO2_base", eCO2_base);
+
+      preferences.end();
     }
-    u8g2log.print("Baseline values: eCO2: 0x");
-    u8g2log.print(eCO2_base, HEX);
-    u8g2log.print(" & TVOC: 0x");
-    u8g2log.print(TVOC_base, HEX);
-    u8g2log.print("\n");
-
-    //Init Non Volatile Storage
-    // Namespace name is limited to 15 chars.
-    // RW-mode (second parameter has to be false).
-    preferences.begin("env-monitor", false);
-
-    preferences.putUShort("TVOC_base", TVOC_base);
-    preferences.putUShort("eCO2_base", eCO2_base);
-
-    preferences.end();
   }
 
   //wait 1min
   delay(60000);
+  elapsed_minutes++;
 
 }
 
