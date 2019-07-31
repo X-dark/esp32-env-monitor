@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <Preferences.h>
+#include <Ticker.h>
 
 #include <WiFi.h>
 #include "wifi_login.h"
@@ -19,6 +20,9 @@
 WebServer server(80);
 
 Preferences preferences;
+
+Ticker metricsReader;
+Ticker baselineReader;
 
 U8G2_SSD1327_WS_128X128_1_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 17, /* dc=*/ 3, /* reset=*/ 16);
 
@@ -72,6 +76,69 @@ BME280::PresUnit presUnit(BME280::PresUnit_hPa);
 float temp(NAN), hum(NAN), pres(NAN);
 uint16_t TVOC_base, eCO2_base;
 bool baseline_set = false;
+
+void readMetrics() {
+
+  //Clear screen
+  u8g2log.print("\f");
+
+  //Read Temperature, humidity and pressure
+  bme.read(pres, temp, hum, tempUnit, presUnit);
+
+  //Read Air Quality
+  sgp.setHumidity(getAbsoluteHumidity(temp, hum));
+
+  if (! sgp.IAQmeasure()) {
+    u8g2log.print("Air Quality Measurement failed\n");
+    return;
+  }
+
+  u8g2log.print("Temp: ");
+  u8g2log.print(temp);
+  u8g2log.print("°"+ String(tempUnit == BME280::TempUnit_Celsius ? 'C' :'F'));
+  u8g2log.print("\nHum: ");
+  u8g2log.print(hum);
+  u8g2log.print("% RH");
+  u8g2log.print("\nPres: ");
+  u8g2log.print(pres);
+  u8g2log.print("hPa\n");
+
+  u8g2log.print("TVOC ");
+  u8g2log.print(sgp.TVOC);
+  u8g2log.print(" ppb\n");
+  u8g2log.print("eCO2 ");
+  u8g2log.print(sgp.eCO2);
+  u8g2log.print(" ppm\n");
+
+}
+
+void readBaseline() {
+
+  if (! sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) {
+    u8g2log.print("Failed to get baseline readings\n");
+    return;
+  }
+  u8g2log.print("Baseline values: eCO2: 0x");
+  u8g2log.print(eCO2_base, HEX);
+  u8g2log.print(" & TVOC: 0x");
+  u8g2log.print(TVOC_base, HEX);
+  u8g2log.print("\n");
+
+  //Init Non Volatile Storage
+  // Namespace name is limited to 15 chars.
+  // RW-mode (second parameter has to be false).
+  preferences.begin("env-monitor", false);
+  preferences.putBool("baseline_set",true);
+
+  preferences.putUShort("TVOC_base", TVOC_base);
+  preferences.putUShort("eCO2_base", eCO2_base);
+
+  preferences.end();
+
+  //Next baseline reading in 1h
+  baselineReader.once(3600, readBaseline);
+
+}
 
 void sendMetrics() {
   String message = "# ESP32 Env monitor Prometheus metrics\n\n";
@@ -207,78 +274,20 @@ void setup() {
   //delay to allow setup output reading
   delay(10000);
 
+  //read Metrics once
+  readMetrics();
+
+  //and then read Metrics every minutes
+  metricsReader.attach(60, readMetrics);
+
+  //First baseline reading after 12 hours
+  baselineReader.once(3600 * 12, readBaseline);
+
 }
 
-int elapsed_minutes = 0;
-int elapsed_hours = 0;
 void loop() {
 
   server.handleClient();
-
-  //Clear screen
-  u8g2log.print("\f");
-
-  //Read Temperature, humidity and pressure
-  bme.read(pres, temp, hum, tempUnit, presUnit);
-
-  //Read Air Quality
-  sgp.setHumidity(getAbsoluteHumidity(temp, hum));
-
-  if (! sgp.IAQmeasure()) {
-    u8g2log.print("Air Quality Measurement failed\n");
-    return;
-  }
-
-  u8g2log.print("Temp: ");
-  u8g2log.print(temp);
-  u8g2log.print("°"+ String(tempUnit == BME280::TempUnit_Celsius ? 'C' :'F'));
-  u8g2log.print("\nHum: ");
-  u8g2log.print(hum);
-  u8g2log.print("% RH");
-  u8g2log.print("\nPres: ");
-  u8g2log.print(pres);
-  u8g2log.print("hPa\n");
-
-  u8g2log.print("TVOC ");
-  u8g2log.print(sgp.TVOC);
-  u8g2log.print(" ppb\n");
-  u8g2log.print("eCO2 ");
-  u8g2log.print(sgp.eCO2);
-  u8g2log.print(" ppm\n");
-
-  //Get Baseline readings every hour
-  if (elapsed_minutes == 60) {
-    elapsed_minutes = 0;
-    elapsed_hours++;
-
-    //only get baseline after running for 12h
-    if (elapsed_hours >= 12 ){
-      if (! sgp.getIAQBaseline(&eCO2_base, &TVOC_base)) {
-        u8g2log.print("Failed to get baseline readings\n");
-        return;
-      }
-      u8g2log.print("Baseline values: eCO2: 0x");
-      u8g2log.print(eCO2_base, HEX);
-      u8g2log.print(" & TVOC: 0x");
-      u8g2log.print(TVOC_base, HEX);
-      u8g2log.print("\n");
-
-      //Init Non Volatile Storage
-      // Namespace name is limited to 15 chars.
-      // RW-mode (second parameter has to be false).
-      preferences.begin("env-monitor", false);
-      preferences.putBool("baseline_set",true);
-
-      preferences.putUShort("TVOC_base", TVOC_base);
-      preferences.putUShort("eCO2_base", eCO2_base);
-
-      preferences.end();
-    }
-  }
-
-  //wait 1min
-  delay(60000);
-  elapsed_minutes++;
 
 }
 
