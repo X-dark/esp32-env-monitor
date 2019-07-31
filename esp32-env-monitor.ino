@@ -67,8 +67,37 @@ uint32_t getAbsoluteHumidity(float temperature, float humidity) {
   return absoluteHumidityScaled;
 }
 
+BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
+BME280::PresUnit presUnit(BME280::PresUnit_hPa);
+float temp(NAN), hum(NAN), pres(NAN);
 uint16_t TVOC_base, eCO2_base;
 bool baseline_set = false;
+
+void sendMetrics() {
+  String message = "# ESP32 Env monitor Prometheus metrics\n\n";
+
+  message += "# HELP env_temperature The temperature in " + String(tempUnit == BME280::TempUnit_Celsius ? 'C' :'F') + "\n";
+  message += "# TYPE env_temperature gauge\n";
+  message += "env_temperature " + String(temp) + "\n\n";
+
+  message += "# HELP env_pressure The pressure in " + String(presUnit) + "\n";
+  message += "# TYPE env_pressure gauge\n";
+  message += "env_pressure " + String(pres) + "\n\n";
+
+  message += "# HELP env_humidity The humidity in %\n";
+  message += "# TYPE env_humidity gauge\n";
+  message += "env_humidity " + String(hum) + "\n\n";
+
+  message += "# HELP env_tvoc The TVOC in ppb\n";
+  message += "# TYPE env_tvoc gauge\n";
+  message += "env_tvoc " + String(sgp.TVOC) + "\n\n";
+
+  message += "# HELP env_eco2 The eCO2 in ppb\n";
+  message += "# TYPE env_eco2 gauge\n";
+  message += "env_eco2 " + String(sgp.eCO2) + "\n\n";
+
+  server.send(200, "text/plain; version=0.0.4", message);
+}
 
 void setup() {
 
@@ -103,6 +132,12 @@ void setup() {
   u8g2log.print("\n");
 
   //Init Server
+  server.on("/",
+    []() {
+      server.send(200, "text/plain", "Welcome to the Env Monitor!\n");
+    }
+  );
+  server.on("/metrics", sendMetrics);
   server.onNotFound(
     []() {
       server.send(404, "text/plain", "Content not found\n");
@@ -184,10 +219,6 @@ void loop() {
   u8g2log.print("\f");
 
   //Read Temperature, humidity and pressure
-  float temp(NAN), hum(NAN), pres(NAN);
-  BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
-  BME280::PresUnit presUnit(BME280::PresUnit_hPa);
-
   bme.read(pres, temp, hum, tempUnit, presUnit);
 
   //Read Air Quality
