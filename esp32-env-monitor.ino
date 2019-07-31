@@ -143,17 +143,27 @@ void readBaseline() {
 void sendMetrics() {
   String message = "# ESP32 Env monitor Prometheus metrics\n\n";
 
-  message += "# HELP env_temperature The temperature in " + String(tempUnit == BME280::TempUnit_Celsius ? 'C' :'F') + "\n";
-  message += "# TYPE env_temperature gauge\n";
-  message += "env_temperature " + String(temp) + "\n\n";
+  float temperature = temp;
+  float humidity = hum;
+  float pressure = pres;
 
-  message += "# HELP env_pressure The pressure in " + String(presUnit) + "\n";
-  message += "# TYPE env_pressure gauge\n";
-  message += "env_pressure " + String(pres) + "\n\n";
+  if (temperature < 100) {
+    message += "# HELP env_temperature The temperature in " + String(tempUnit == BME280::TempUnit_Celsius ? 'C' :'F') + "\n";
+    message += "# TYPE env_temperature gauge\n";
+    message += "env_temperature " + String(temperature) + "\n\n";
+  }
 
-  message += "# HELP env_humidity The humidity in %\n";
-  message += "# TYPE env_humidity gauge\n";
-  message += "env_humidity " + String(hum) + "\n\n";
+  if (pressure < 2000) {
+    message += "# HELP env_pressure The pressure in " + String(presUnit) + "\n";
+    message += "# TYPE env_pressure gauge\n";
+    message += "env_pressure " + String(pressure) + "\n\n";
+  }
+
+  if (humidity < 100){
+    message += "# HELP env_humidity The humidity in %\n";
+    message += "# TYPE env_humidity gauge\n";
+    message += "env_humidity " + String(humidity) + "\n\n";
+  }
 
   message += "# HELP env_tvoc The TVOC in ppb\n";
   message += "# TYPE env_tvoc gauge\n";
