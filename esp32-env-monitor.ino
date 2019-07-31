@@ -4,6 +4,7 @@
 
 #include <WiFi.h>
 #include "wifi_login.h"
+#include <WebServer.h>
 
 #include <U8g2lib.h>
 
@@ -14,6 +15,8 @@
 #include <BME280I2C.h>
 
 #include <Adafruit_SGP30.h>
+
+WebServer server(80);
 
 Preferences preferences;
 
@@ -99,6 +102,14 @@ void setup() {
   u8g2log.print("\n");
   u8g2log.print("\n");
 
+  //Init Server
+  server.onNotFound(
+    []() {
+      server.send(404, "text/plain", "Content not found\n");
+    }
+  );
+  server.begin();
+
   //Init BME280 sensor
   Wire.begin();
 
@@ -166,6 +177,8 @@ void setup() {
 int elapsed_minutes = 0;
 int elapsed_hours = 0;
 void loop() {
+
+  server.handleClient();
 
   //Clear screen
   u8g2log.print("\f");
