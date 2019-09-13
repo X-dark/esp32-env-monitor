@@ -295,7 +295,27 @@ void setup() {
 
 }
 
+
 void loop() {
+
+  //detect connection lost and reconnect
+  if (WiFi.status() != WL_CONNECTED) {
+      u8g2log.print("WiFi lost connection.\n");
+
+      delay(500);
+      WiFi.begin(ssid, password);
+
+      u8g2log.print("Reconnecting to:\n");
+      u8g2log.print(ssid);
+      u8g2log.print("\n");
+      u8g2log.print("\n");
+
+      while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+        u8g2log.print(".");
+      }
+
+  };
 
   server.handleClient();
 
