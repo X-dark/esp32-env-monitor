@@ -18,5 +18,4 @@ Air quality and other environment data monitoring for an ESP32 board
 
 A Makefile is provided to compile and upload to the board. This Makefile uses:
 
-* [arduino-cli](https://github.com/arduino/arduino-cli) for compilation
-* `esptool.py` shipped with the arduino core for uploading (while this [issue](https://github.com/arduino/arduino-cli/issues/163) is not resolved)
+* [arduino-cli](https://github.com/arduino/arduino-cli) for compilation and uploading
