@@ -25,7 +25,7 @@ Ticker metricsReader;
 Ticker metricsPrinter;
 Ticker baselineReader;
 
-U8G2_SSD1327_WS_128X128_1_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 17, /* dc=*/ 3, /* reset=*/ 16);
+U8G2_SSD1327_WS_128X128_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 17, /* dc=*/ 3, /* reset=*/ 16);
 
 
 /* Based on Bosch BME280I2C environmental sensor data sheet.
