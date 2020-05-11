@@ -22,6 +22,7 @@ WebServer server(80);
 Preferences preferences;
 
 Ticker metricsReader;
+Ticker metricsPrinter;
 Ticker baselineReader;
 
 U8G2_SSD1327_WS_128X128_1_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 17, /* dc=*/ 3, /* reset=*/ 16);
@@ -77,10 +78,9 @@ float temp(NAN), hum(NAN), pres(NAN);
 uint16_t TVOC_base, eCO2_base;
 bool baseline_set = false;
 
-void readMetrics() {
+uint8_t last_printed = 0;
 
-  //Clear screen
-  u8g2log.print("\f");
+void readMetrics() {
 
   //Read Temperature, humidity and pressure
   bme.read(pres, temp, hum, tempUnit, presUnit);
@@ -93,22 +93,60 @@ void readMetrics() {
     return;
   }
 
-  u8g2log.print("Temp: ");
-  u8g2log.print(temp);
-  u8g2log.print("°"+ String(tempUnit == BME280::TempUnit_Celsius ? 'C' :'F'));
-  u8g2log.print("\nHum: ");
-  u8g2log.print(hum);
-  u8g2log.print("% RH");
-  u8g2log.print("\nPres: ");
-  u8g2log.print(pres);
-  u8g2log.print("hPa\n");
+}
 
-  u8g2log.print("TVOC ");
-  u8g2log.print(sgp.TVOC);
-  u8g2log.print(" ppb\n");
-  u8g2log.print("eCO2 ");
-  u8g2log.print(sgp.eCO2);
-  u8g2log.print(" ppm\n");
+void printMetrics() {
+
+  //Clear screen
+  u8g2log.print("\f\n");
+
+  //Print a different metrics each time
+  switch (last_printed) {
+
+    case 0:
+      u8g2log.print("Temp: ");
+      u8g2log.print(temp);
+      u8g2log.print("°C\n");
+      last_printed++;
+      break;
+
+    case 1:
+      u8g2log.print("Hum: ");
+      u8g2log.print(hum);
+      u8g2log.print("% RH\n");
+      last_printed++;
+      break;
+
+    case 2:
+      u8g2log.print("Pres: ");
+      u8g2log.print(pres);
+      u8g2log.print("hPa\n");
+      last_printed++;
+      break;
+
+    case 3:
+
+      u8g2log.print("TVOC ");
+      u8g2log.print(sgp.TVOC);
+      u8g2log.print(" ppb\n");
+      last_printed++;
+      break;
+
+    case 4:
+      u8g2log.print("eCO2 ");
+      u8g2log.print(sgp.eCO2);
+      u8g2log.print(" ppm\n");
+      last_printed = 0;
+      break;
+
+    default:
+      u8g2log.print("invalid last_printed value\n");
+      last_printed = 0;
+      break;
+
+
+  }
+
 
 }
 
@@ -289,6 +327,9 @@ void setup() {
 
   //and then read Metrics every minutes
   metricsReader.attach(60, readMetrics);
+
+  //print metrics every 15 seconds
+  metricsPrinter.attach(15, printMetrics);
 
   //First baseline reading after 12 hours
   baselineReader.once(3600 * 12, readBaseline);
