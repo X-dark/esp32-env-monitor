@@ -97,55 +97,86 @@ void readMetrics() {
 
 void printMetrics() {
 
-  //Clear screen
-  u8g2log.print("\f\n");
+  //Clear buffer
+  u8g2.clearBuffer();
 
   //Print a different metrics each time
   switch (last_printed) {
 
     case 0:
-      u8g2log.print("Temp: ");
-      u8g2log.print(temp);
-      u8g2log.print("°C\n");
+      u8g2.setCursor(0, 15);
+      u8g2.setFont(u8g2_font_fur14_tf);
+      u8g2.print("Temperature");
+
+      u8g2.setCursor(0, 70);
+      u8g2.setFont(u8g2_font_fur30_tf);
+      u8g2.print(temp,1);
+      u8g2.setFont(u8g2_font_fur11_tf);
+      u8g2.print(" °C");
       last_printed++;
       break;
 
     case 1:
-      u8g2log.print("Hum: ");
-      u8g2log.print(hum);
-      u8g2log.print("% RH\n");
+      u8g2.setCursor(0, 15);
+      u8g2.setFont(u8g2_font_fur14_tf);
+      u8g2.print("Humidity");
+
+      u8g2.setCursor(0, 70);
+      u8g2.setFont(u8g2_font_fur30_tf);
+      u8g2.print(hum,1);
+      u8g2.setFont(u8g2_font_fur11_tf);
+      u8g2.print(" % RH");
       last_printed++;
       break;
 
     case 2:
-      u8g2log.print("Pres: ");
-      u8g2log.print(pres);
-      u8g2log.print("hPa\n");
+      u8g2.setCursor(0, 15);
+      u8g2.setFont(u8g2_font_fur14_tf);
+      u8g2.print("Pressure");
+
+      u8g2.setCursor(0, 70);
+      u8g2.setFont(u8g2_font_fur30_tf);
+      u8g2.print(pres,0);
+      u8g2.setFont(u8g2_font_fur11_tf);
+      u8g2.print(" hPa");
       last_printed++;
       break;
 
     case 3:
+      u8g2.setCursor(0, 15);
+      u8g2.setFont(u8g2_font_fur14_tf);
+      u8g2.print("Total VOC");
 
-      u8g2log.print("TVOC ");
-      u8g2log.print(sgp.TVOC);
-      u8g2log.print(" ppb\n");
+      u8g2.setCursor(0, 70);
+      u8g2.setFont(u8g2_font_fur30_tf);
+      u8g2.print(sgp.TVOC);
+      u8g2.setFont(u8g2_font_fur11_tf);
+      u8g2.print(" ppb");
       last_printed++;
       break;
 
     case 4:
-      u8g2log.print("eCO2 ");
-      u8g2log.print(sgp.eCO2);
-      u8g2log.print(" ppm\n");
+      u8g2.setCursor(0, 15);
+      u8g2.setFont(u8g2_font_fur14_tf);
+      u8g2.print("Equiv CO2");
+
+      u8g2.setCursor(0, 70);
+      u8g2.setFont(u8g2_font_fur30_tf);
+      u8g2.print(sgp.eCO2);
+      u8g2.setFont(u8g2_font_fur11_tf);
+      u8g2.print(" ppm");
       last_printed = 0;
       break;
 
     default:
-      u8g2log.print("invalid last_printed value\n");
+      u8g2.setFont(u8g2_font_fur11_tf);
+      u8g2.print("invalid last_printed value");
       last_printed = 0;
       break;
 
-
   }
+
+  u8g2.sendBuffer();
 
 
 }
@@ -156,11 +187,6 @@ void readBaseline() {
     u8g2log.print("Failed to get baseline readings\n");
     return;
   }
-  u8g2log.print("Baseline values: eCO2: 0x");
-  u8g2log.print(eCO2_base, HEX);
-  u8g2log.print(" & TVOC: 0x");
-  u8g2log.print(TVOC_base, HEX);
-  u8g2log.print("\n");
 
   //Init Non Volatile Storage
   // Namespace name is limited to 15 chars.
