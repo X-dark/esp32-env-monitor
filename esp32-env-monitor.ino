@@ -354,8 +354,8 @@ void setup() {
   //and then read Metrics every minutes
   metricsReader.attach(60, readMetrics);
 
-  //print metrics every 15 seconds
-  metricsPrinter.attach(15, printMetrics);
+  //print metrics every 5 seconds
+  metricsPrinter.attach(5, printMetrics);
 
   //First baseline reading after 12 hours
   baselineReader.once(3600 * 12, readBaseline);
