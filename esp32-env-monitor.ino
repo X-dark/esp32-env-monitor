@@ -177,7 +177,7 @@ void printMetrics() {
   }
 
   u8g2.setCursor(0, 120);
-  u8g2.setFont(u8g2_font_fur11_tf);
+  u8g2.setFont(u8g2_font_fur17_tf);
   u8g2.print(temp,1);
   u8g2.print(" °C");
 
