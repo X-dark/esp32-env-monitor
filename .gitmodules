@@ -7,3 +7,6 @@
 [submodule "libraries/Adafruit_SGP30"]
 	path = libraries/Adafruit_SGP30
 	url = https://github.com/adafruit/Adafruit_SGP30
+[submodule "libraries/Adafruit_BusIO"]
+	path = libraries/Adafruit_BusIO
+	url = https://github.com/adafruit/Adafruit_BusIO
